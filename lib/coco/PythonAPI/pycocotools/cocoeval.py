@@ -77,7 +77,7 @@ class COCOeval:
         self._paramsEval = {}               # parameters for evaluation
         self.stats = []                     # result summarization
         self.ious = {}                      # ious between all gts and dts
-        if not cocoGt is None:
+        if cocoGt is not None:
             self.params.imgIds = sorted(cocoGt.getImgIds())
             self.params.catIds = sorted(cocoGt.getCatIds())
 
@@ -128,7 +128,7 @@ class COCOeval:
         print('Running per image evaluation...')
         p = self.params
         # add backward compatibility if useSegm is specified in params
-        if not p.useSegm is None:
+        if p.useSegm is not None:
             p.iouType = 'segm' if p.useSegm == 1 else 'bbox'
             print('useSegm (deprecated) is not None. Running {} evaluation'.format(p.iouType))
         print('Evaluate annotation type *{}*'.format(p.iouType))
@@ -142,7 +142,7 @@ class COCOeval:
         # loop through images, area range, max detection number
         catIds = p.catIds if p.useCats else [-1]
 
-        if p.iouType == 'segm' or p.iouType == 'bbox':
+        if p.iouType in ['segm', 'bbox']:
             computeIoU = self.computeIoU
         elif p.iouType == 'keypoints':
             computeIoU = self.computeOks
@@ -176,19 +176,18 @@ class COCOeval:
         if len(dt) > p.maxDets[-1]:
             dt=dt[0:p.maxDets[-1]]
 
-        if p.iouType == 'segm':
-            g = [g['segmentation'] for g in gt]
-            d = [d['segmentation'] for d in dt]
-        elif p.iouType == 'bbox':
+        if p.iouType == 'bbox':
             g = [g['bbox'] for g in gt]
             d = [d['bbox'] for d in dt]
+        elif p.iouType == 'segm':
+            g = [g['segmentation'] for g in gt]
+            d = [d['segmentation'] for d in dt]
         else:
             raise Exception('unknown iouType for iou computation')
 
         # compute iou between each dt and gt region
         iscrowd = [int(o['iscrowd']) for o in gt]
-        ious = maskUtils.iou(d,g,iscrowd)
-        return ious
+        return maskUtils.iou(d,g,iscrowd)
 
     def computeOks(self, imgId, catId):
         p = self.params
@@ -270,7 +269,7 @@ class COCOeval:
         dtm  = np.zeros((T,D))
         gtIg = np.array([g['_ignore'] for g in gt])
         dtIg = np.zeros((T,D))
-        if not len(ious)==0:
+        if len(ious) != 0:
             for tind, t in enumerate(p.iouThrs):
                 for dind, d in enumerate(dt):
                     # information about best match so far (m=-1 -> unmatched)
@@ -356,8 +355,8 @@ class COCOeval:
                 Na = a0*I0
                 for m, maxDet in enumerate(m_list):
                     E = [self.evalImgs[Nk + Na + i] for i in i_list]
-                    E = [e for e in E if not e is None]
-                    if len(E) == 0:
+                    E = [e for e in E if e is not None]
+                    if not E:
                         continue
                     dtScores = np.concatenate([e['dtScores'][0:maxDet] for e in E])
 
@@ -384,14 +383,11 @@ class COCOeval:
                         pr = tp / (fp+tp+np.spacing(1))
                         q  = np.zeros((R,))
 
-                        if nd:
-                            recall[t,k,a,m] = rc[-1]
-                        else:
-                            recall[t,k,a,m] = 0
-
+                        recall[t,k,a,m] = rc[-1] if nd else 0
                         # numpy is slow without cython optimization for accessing elements
                         # use python array gets significant speed improvement
-                        pr = pr.tolist(); q = q.tolist()
+                        pr = pr.tolist()
+                        q = q.tolist()
 
                         for i in range(nd-1, 0, -1):
                             if pr[i] > pr[i-1]:
@@ -444,10 +440,7 @@ class COCOeval:
                     t = np.where(iouThr == p.iouThrs)[0]
                     s = s[t]
                 s = s[:,:,aind,mind]
-            if len(s[s>-1])==0:
-                mean_s = -1
-            else:
-                mean_s = np.mean(s[s>-1])
+            mean_s = -1 if len(s[s>-1])==0 else np.mean(s[s>-1])
             print(iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s))
             return mean_s
         def _summarizeDets():
@@ -517,7 +510,7 @@ class Params:
         self.useCats = 1
 
     def __init__(self, iouType='segm'):
-        if iouType == 'segm' or iouType == 'bbox':
+        if iouType in ['segm', 'bbox']:
             self.setDetParams()
         elif iouType == 'keypoints':
             self.setKpParams()

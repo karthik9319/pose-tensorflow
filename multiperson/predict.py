@@ -118,14 +118,14 @@ def get_person_conf_single(sm, unProb, pos_array, pwidx_array, pw_array):
     assert(pw_array.shape[1] == 1)
 
     det_type_idx = []
-    
+
     firstidx = 0
-    for pidx in range(len(unProb)):
-        lastidx = firstidx + unProb[pidx].shape[0]
+    for item in unProb:
+        lastidx = firstidx + item.shape[0]
 
         curidx = np.array([False]*pos_array.shape[0])
         curidx[firstidx:lastidx] = True
-        
+
         firstidx = lastidx
         det_type_idx.append(curidx)
 
@@ -133,21 +133,22 @@ def get_person_conf_single(sm, unProb, pos_array, pwidx_array, pw_array):
     head_idx = 13
     num_people = unProb[head_idx].shape[0]
 
-    connect_graph = dict()
-    connect_graph[13] = (12,)
-    connect_graph[12] = (8, 9, 2, 3)
-    connect_graph[8] = (7,)
-    connect_graph[7] = (6,)
-    connect_graph[9] = (10,)
-    connect_graph[10] = (11,)
-    connect_graph[2] = (1,)
-    connect_graph[1] = (0,)
-    connect_graph[3] = (4,)
-    connect_graph[4] = (5,)
+    connect_graph = {
+        13: (12,),
+        12: (8, 9, 2, 3),
+        8: (7,),
+        7: (6,),
+        9: (10,),
+        10: (11,),
+        2: (1,),
+        1: (0,),
+        3: (4,),
+        4: (5,),
+    }
 
     person_conf = np.zeros([num_people, sm.num_keypoints, 2])
     SearchNode = namedtuple('SearchNode', ['pidx', 'kidx', 'hidx'])
-    
+
     search_queue = []
 
     for pidx, hidx in enumerate(np.flatnonzero(det_type_idx[head_idx])):
@@ -156,31 +157,33 @@ def get_person_conf_single(sm, unProb, pos_array, pwidx_array, pw_array):
 
     assert(len(search_queue) == num_people)
 
-    while len(search_queue) > 0:
+    while search_queue:
         node = search_queue.pop()
 
-        pidx = node.pidx
         kidx = node.kidx
-        hidx = node.hidx
-
-        # find the closes match for current part 
+        # find the closes match for current part
         if kidx in connect_graph:
+
+            pidx = node.pidx
+            hidx = node.hidx
 
             for kidx2 in connect_graph[kidx]:
                 best_hidx = None
                 best_pw = None
-                
-                # search all pairwise with compatible type 
+
+                # search all pairwise with compatible type
                 for idx in range(pwidx_array.shape[0]):
                     if pwidx_array[idx, 0] == hidx or pwidx_array[idx, 1] == hidx:
                         idx2 = np.flatnonzero(pwidx_array[idx, :] != hidx)[0]
                         other_hidx = pwidx_array[idx, idx2]
 
-                        if det_type_idx[kidx2][other_hidx]:
-                            if pw_array[idx] > best_pw:
-                                best_hidx = other_hidx
-                                best_pw = pw_array[idx]
-                        
+                        if (
+                            det_type_idx[kidx2][other_hidx]
+                            and pw_array[idx] > best_pw
+                        ):
+                            best_hidx = other_hidx
+                            best_pw = pw_array[idx]
+
 
                 if best_pw > 0.5:
                     person_conf[pidx, kidx2, :] = pos_array[best_hidx, :]
@@ -191,11 +194,7 @@ def get_person_conf_single(sm, unProb, pos_array, pwidx_array, pw_array):
     
 
 def get_person_conf_multicut(sm, unLab, unary_array, pos_array):
-    if unLab.shape[0] > 0:
-        num_people = int(np.max(unLab[:, 1])) + 1
-    else:
-        num_people = 0
-
+    num_people = int(np.max(unLab[:, 1])) + 1 if unLab.shape[0] > 0 else 0
     person_conf = np.zeros([num_people, sm.num_keypoints, 2])
     sum_prob = np.zeros([num_people, sm.num_keypoints, 1])
 
@@ -256,7 +255,7 @@ class SpatialModel:
         num_keypoints = cfg.num_joints
         self.cfg = cfg
 
-        self.graph_dict = dict()
+        self.graph_dict = {}
 
         self.same_part_pw_coef = 0.2
 

@@ -12,10 +12,7 @@ def remap_keys(mapping):
 
 
 def save_stats(stats, cfg):
-    mat_stats = {}
-    mat_stats["graph"] = []
-    mat_stats["means"] = []
-    mat_stats["std_devs"] = []
+    mat_stats = {"graph": [], "means": [], "std_devs": []}
     for start in range(cfg.num_joints):
         for end in range(cfg.num_joints):
             if start != end:
