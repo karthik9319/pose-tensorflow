@@ -72,9 +72,9 @@ class MSCOCO(PoseDataset):
                 continue
 
             for ann in anns: # loop through each person
-                person_keypoints = []
-                visibilities = []
                 if ann["num_keypoints"] != 0:
+                    person_keypoints = []
+                    visibilities = []
                     for i in range(self.cfg.num_joints):
                         x_coord = ann["keypoints"][3 * i]
                         y_coord = ann["keypoints"][3 * i + 1]

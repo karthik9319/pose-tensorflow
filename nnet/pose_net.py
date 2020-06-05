@@ -14,13 +14,12 @@ net_funcs = {'resnet_50': resnet_v1.resnet_v1_50,
 
 def prediction_layer(cfg, input, name, num_outputs):
     with slim.arg_scope([slim.conv2d, slim.conv2d_transpose], padding='SAME',
-                        activation_fn=None, normalizer_fn=None,
-                        weights_regularizer=slim.l2_regularizer(cfg.weight_decay)):
+                            activation_fn=None, normalizer_fn=None,
+                            weights_regularizer=slim.l2_regularizer(cfg.weight_decay)):
         with tf.variable_scope(name):
-            pred = slim.conv2d_transpose(input, num_outputs,
+            return slim.conv2d_transpose(input, num_outputs,
                                          kernel_size=[3, 3], stride=2,
                                          scope='block4')
-            return pred
 
 
 def get_batch_spec(cfg):
@@ -45,13 +44,13 @@ class PoseNet:
         self.cfg = cfg
 
     def extract_features(self, inputs):
-        net_fun = net_funcs[self.cfg.net_type]
-
         mean = tf.constant(self.cfg.mean_pixel,
                            dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
         im_centered = inputs - mean
 
         with slim.arg_scope(resnet_v1.resnet_arg_scope()):
+            net_fun = net_funcs[self.cfg.net_type]
+
             net, end_points = net_fun(im_centered, global_pool=False, output_stride=16, is_training=False)
 
         return net, end_points

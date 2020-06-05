@@ -69,9 +69,9 @@ def load_pairwise_stats(cfg):
     for id in range(len(mat_stats['graph'])):
         pair = tuple(mat_stats['graph'][id])
         pairwise_stats[pair] = {"mean": mat_stats['means'][id], "std": mat_stats['std_devs'][id]}
-    for pair in pairwise_stats:
+    for pair, value in pairwise_stats.items():
         pairwise_stats[pair]["mean"] *= cfg.global_scale
-        pairwise_stats[pair]["std"] *= cfg.global_scale
+        value["std"] *= cfg.global_scale
     return pairwise_stats
 
 

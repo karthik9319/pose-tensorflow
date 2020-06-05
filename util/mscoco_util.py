@@ -55,11 +55,13 @@ def pose_predict_with_gt_segm(scmap, offmat, stride, gt_segm, coco_id):
 
     coco_img_results = []
     for person_keypoints in img_keypoints:
-        person_result = {}
-        person_result["image_id"] = coco_id
-        person_result["category_id"] = 1
-        person_result["keypoints"] = person_keypoints
-        person_result["score"] = 1
+        person_result = {
+            "image_id": coco_id,
+            "category_id": 1,
+            "keypoints": person_keypoints,
+            "score": 1,
+        }
+
         coco_img_results.append(person_result)
 
     return coco_img_results

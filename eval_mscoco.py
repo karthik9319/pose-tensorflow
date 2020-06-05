@@ -17,10 +17,10 @@ def apply_threhsold(inFile, threshold):
     with open(inFile) as data_file:
         data = json.load(data_file)
 
-    for person_id in range(len(data)):
-        keypoints = data[person_id]["keypoints"]
+    for datum in data:
+        keypoints = datum["keypoints"]
         keypoints = [int(keypoints[i] > threshold) if i % 3 == 2 else int(keypoints[i]) for i in range(len(keypoints))]
-        data[person_id]["keypoints"] = keypoints
+        datum["keypoints"] = keypoints
 
     with open(outFile, 'w') as outfile:
         json.dump(data, outfile)

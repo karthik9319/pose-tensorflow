@@ -78,7 +78,7 @@ class PersonDraw:
         maxy = visim.shape[0] - 2 * marker_size
 
         num_people = person_conf.shape[0]
-        color_assignment = dict()
+        color_assignment = {}
 
         # MA: assign same color to matching body configurations
         if self.prev_person_conf.shape[0] > 0 and person_conf.shape[0] > 0:
